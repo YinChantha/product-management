@@ -1,7 +1,7 @@
 // app/products/hooks/useProductManagement.ts
 import { useState, useCallback } from 'react';
 import { ProductStatus } from '@/lib/types/product';
-import { useToast } from '@/components/ui/toast';
+import { useToast } from '@/components/customer-ui/toast';
 import { useExcelExport } from './useExcelExport';
 import { EXPORT_COLUMNS } from '../products/constants';
 

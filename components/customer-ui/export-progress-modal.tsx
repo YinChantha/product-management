@@ -2,7 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { X, AlertCircle, CheckCircle } from 'lucide-react';
-import { Progress } from './progress';
+import { Progress } from '../customer-ui/progress';
 
 interface ExportProgressModalProps {
   isOpen: boolean;

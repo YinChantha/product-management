@@ -1,10 +1,8 @@
-// app/products/page.tsx
 "use client";
 
 import { useMemo, useEffect } from "react";
 import { useProducts } from "@/lib/api/products";
 import { useAllProductIds } from "@/lib/api/products/queries";
-import ExportProgressModal from "@/components/ui/export-progress-modal";
 import ProductFilterTabs from "./ProductFilterTabs";
 import ProductList from "./ProductList";
 import ProductsBulkActions from "./ProductsBulkActions";
@@ -14,6 +12,7 @@ import { useProductManagement } from "../hooks/useProductManagement";
 import { ITEMS_PER_PAGE } from "./constants";
 import Header from "@/components/header/header";
 import Pagination from "@/lib/providers/pagination";
+import ExportProgressModal from "@/components/customer-ui/export-progress-modal";
 
 export default function ProductsPage() {
   const {

@@ -3,7 +3,7 @@ import { Product, ProductStatus } from '@/lib/types/product';
 import { useDeleteProduct } from '@/lib/api/products';
 import { filterProductsByStatus, formatDate, formatPrice } from '@/lib/utils';
 import DynamicTable, { ColumnConfig } from '@/components/table/dynamic-table';
-import { useToast } from '@/components/ui/toast';
+import { useToast } from '@/components/customer-ui/toast';
 
 interface ProductListProps {
   products: Product[];
