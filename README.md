@@ -2,8 +2,6 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
-## Getting Started
-
 ### Prerequisites
 - Node.js version 22.17.0 (recommended)
 - npm, yarn, pnpm, or bun package manager
@@ -28,7 +26,10 @@ pnpm dev
 bun dev
 ```
 
-Build for production:
+
+2. Build for production::
+
+```bash
 npm run build
 # or
 yarn build
@@ -36,7 +37,7 @@ yarn build
 pnpm build
 # or
 bun build
-
+```
 
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
