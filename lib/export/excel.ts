@@ -1,4 +1,3 @@
-// lib/export/excel.ts
 import * as XLSX from 'xlsx';
 
 export function collectKeys<T extends Record<string, any>>(rows: T[]): string[] {

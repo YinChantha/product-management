@@ -1,28 +1,18 @@
 // lib/api/client.ts
 
-/**
- * Base API Client Configuration
- * Centralized API configuration for all requests
- */
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 export const API_CONFIG = {
-  BASE_URL: 'https://dummyjson.com',
+  BASE_URL: API_BASE_URL,
   ENDPOINTS: {
     PRODUCTS: '/products',
     PRODUCTS_SEARCH: '/products/search',
-    PRODUCTS_CATEGORY: '/products/category-list',
-    CATEGORIES: '/products/category-list',
+    PRODUCTS_CATEGORY: '/products/category',
+    CATEGORIES: '/products/categories',
   },
-  DEFAULT_LIMIT: 10,
 } as const;
 
-/**
- * Generic API request handler with error handling
- */
-export async function apiRequest<T>(
-  url: string,
-  options?: RequestInit
-): Promise<T> {
+export async function apiRequest<T>(url: string, options?: RequestInit): Promise<T> {
   try {
     const response = await fetch(url, {
       ...options,
@@ -33,37 +23,28 @@ export async function apiRequest<T>(
     });
 
     if (!response.ok) {
-      throw new Error(`API Error: ${response.status} ${response.statusText}`);
+      const errorText = await response.text();
+      throw new Error(`API Error (${response.status}): ${errorText}`);
     }
 
-    const data = await response.json();
-    return data;
+    return await response.json();
   } catch (error) {
-    if (error instanceof Error) {
-      throw new Error(`API Request Failed: ${error.message}`);
-    }
-    throw new Error('Unknown API Error');
+    console.error('API Request Failed:', error);
+    throw error;
   }
 }
 
-/**
- * Build URL with query parameters
- */
-export function buildUrl(
-  baseUrl: string,
-  params?: Record<string, string | number | undefined>
-): string {
+export function buildUrl(baseUrl: string, params?: Record<string, any>): string {
   if (!params) return baseUrl;
 
-  const filteredParams = Object.entries(params)
-    .filter(([_, value]) => value !== undefined)
-    .reduce((acc, [key, value]) => {
-      acc[key] = String(value);
-      return acc;
-    }, {} as Record<string, string>);
-
-  const queryString = new URLSearchParams(filteredParams).toString();
-  const separator = baseUrl.includes('?') ? '&' : '?';
+  const searchParams = new URLSearchParams();
   
-  return queryString ? `${baseUrl}${separator}${queryString}` : baseUrl;
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null) {
+      searchParams.append(key, String(value));
+    }
+  });
+
+  const queryString = searchParams.toString();
+  return queryString ? `${baseUrl}?${queryString}` : baseUrl;
 }

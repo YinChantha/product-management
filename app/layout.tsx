@@ -1,10 +1,9 @@
-// app/layout.tsx
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import QueryProvider from "@/lib/providers/query-provider";
 import Sidebar from "@/components/sidebar/sidebar";
-import { ToastProvider } from "@/components/customer-ui/toast"; // This is the Context Provider
+import { ToastProvider } from "@/components/customer-ui/toast";
 
 const inter = Inter({ subsets: ["latin"] });
 

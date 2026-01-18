@@ -1,6 +1,6 @@
 'use client';
 
-import { ProductStatus } from '@/lib/types/product';
+import { ProductStatus } from '@/app/products/_types/product';
 
 interface ProductFilterTabsProps {
   activeStatus: ProductStatus;

@@ -11,18 +11,8 @@ import {
   deleteProduct,
 } from './endpoints';
 import { productKeys } from './queries';
-import {
-  Product,
-  ProductFormData,
-  DeleteProductResponse,
-} from '@/lib/types/product';
+import { DeleteProductResponse, Product, ProductFormData } from '@/app/products/_types/product';
 
-/**
- * Hook: Create Product
- * Usage:
- * const createMutation = useCreateProduct();
- * createMutation.mutate({ title: 'New Product', ... })
- */
 export function useCreateProduct(): UseMutationResult<
   Product,
   Error,
@@ -32,19 +22,12 @@ export function useCreateProduct(): UseMutationResult<
 
   return useMutation({
     mutationFn: createProduct,
-    // Invalidate and refetch products list after success
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: productKeys.lists() });
     },
   });
 }
 
-/**
- * Hook: Update Product
- * Usage:
- * const updateMutation = useUpdateProduct();
- * updateMutation.mutate({ id: 1, data: { title: 'Updated' } })
- */
 export function useUpdateProduct(): UseMutationResult<
   Product,
   Error,
@@ -54,11 +37,8 @@ export function useUpdateProduct(): UseMutationResult<
 
   return useMutation({
     mutationFn: ({ id, data }) => updateProduct(id, data),
-    // Update cache optimistically
     onSuccess: (updatedProduct) => {
-      // Invalidate lists
       queryClient.invalidateQueries({ queryKey: productKeys.lists() });
-      // Update single product cache
       queryClient.setQueryData(
         productKeys.detail(updatedProduct.id),
         updatedProduct
@@ -67,12 +47,6 @@ export function useUpdateProduct(): UseMutationResult<
   });
 }
 
-/**
- * Hook: Delete Product
- * Usage:
- * const deleteMutation = useDeleteProduct();
- * deleteMutation.mutate(1)
- */
 export function useDeleteProduct(): UseMutationResult<
   DeleteProductResponse,
   Error,
@@ -82,17 +56,13 @@ export function useDeleteProduct(): UseMutationResult<
 
   return useMutation({
     mutationFn: deleteProduct,
-    // Optimistic update: remove from list immediately
     onMutate: async (productId) => {
-      // Cancel outgoing refetches
       await queryClient.cancelQueries({ queryKey: productKeys.lists() });
 
-      // Get current lists
       const previousProducts = queryClient.getQueriesData({
         queryKey: productKeys.lists(),
       });
 
-      // Optimistically update lists
       queryClient.setQueriesData(
         { queryKey: productKeys.lists() },
         (old: any) => {
@@ -105,10 +75,8 @@ export function useDeleteProduct(): UseMutationResult<
         }
       );
 
-      // Return context for rollback
       return { previousProducts };
     },
-    // Rollback on error
     onError: (err, productId, context) => {
       if (context?.previousProducts) {
         context.previousProducts.forEach(([queryKey, data]) => {
@@ -116,7 +84,6 @@ export function useDeleteProduct(): UseMutationResult<
         });
       }
     },
-    // Always refetch after error or success
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: productKeys.lists() });
     },

@@ -1,9 +1,17 @@
-// app/products/hooks/useProductManagement.ts
 import { useState, useCallback } from 'react';
-import { ProductStatus } from '@/lib/types/product';
+import { ProductStatus } from '@/app/products/_types/product';
 import { useToast } from '@/components/customer-ui/toast';
 import { useExcelExport } from './useExcelExport';
-import { EXPORT_COLUMNS } from '../products/constants';
+import { EXPORT_COLUMNS } from '../constants';
+
+interface ExportConfig {
+  exportBatchSize?: number;
+  sheetName?: string;
+  getFileName?: () => string;
+  makeKey: (skip: number, limit: number) => readonly unknown[];
+  fetchPage: (skip: number, limit: number, signal?: AbortSignal) => Promise<any>;
+  transformRow?: (original: any) => Record<string, any>;
+}
 
 export function useProductManagement() {
   const [activeStatus, setActiveStatus] = useState<ProductStatus>('all');
@@ -15,8 +23,8 @@ export function useProductManagement() {
 
   const { showToast } = useToast();
 
-  // Export hook with all export logic
-  const exportHook = useExcelExport({
+  // Export configuration
+  const exportConfig: ExportConfig = {
     exportBatchSize: 10,
     sheetName: 'Products',
     getFileName: () => {
@@ -24,16 +32,10 @@ export function useProductManagement() {
       const statusText = activeStatus !== 'all' ? `-${activeStatus}` : '';
       return `products${statusText}-${date}.xlsx`;
     },
-    
     makeKey: (skip: number, limit: number) => [
       'products', 
-      { 
-        limit, 
-        skip,
-        select: 'id,title,sku,category,stock,price,thumbnail,meta' 
-      }
-    ],
-    
+      { limit, skip, select: 'id,title,sku,category,stock,price,thumbnail,meta' }
+    ] as const,
     fetchPage: async (skip: number, limit: number, signal?: AbortSignal) => {
       const params = new URLSearchParams({
         limit: limit.toString(),
@@ -41,82 +43,68 @@ export function useProductManagement() {
       });
       
       const response = await fetch(
-        `https://dummyjson.com/products/search?${params.toString()}`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/products/search?${params.toString()}`,
         { signal }
       );
       
-      if (!response.ok) {
-        throw new Error(`Failed to fetch: ${response.status}`);
-      }
+      if (!response.ok) throw new Error(`Failed to fetch: ${response.status}`);
       
-      const data = await response.json();
-      return {
-        products: data.products,
-        total: data.total,
-        skip: data.skip,
-        limit: data.limit
-      };
+      return await response.json();
     },
-    
-    transformRow: (original: any) => {
-      return {
-        'ID': original.id,
-        'Product Name': original.title,
-        'SKU': original.sku || 'N/A',
-        'Category': original.category ? 
-          original.category.charAt(0).toUpperCase() + original.category.slice(1).replace(/-/g, ' ') : 'Uncategorized',
-        'Stock': original.stock || 0,
-        'Stock Status': (original.stock || 0) > 0 ? 'In Stock' : 'Out of Stock',
-        'Price': `$${parseFloat(original.price || 0).toFixed(2)}`,
-        'Image URL': original.thumbnail || '',
-        'Created Date': original.meta?.createdAt ? 
-          new Date(original.meta.createdAt).toLocaleDateString() : new Date().toLocaleDateString()
-      };
-    },
-  });
+    transformRow: (original: any) => ({
+      'ID': original.id,
+      'Product Name': original.title,
+      'SKU': original.sku || 'N/A',
+      'Category': original.category ? 
+        original.category.charAt(0).toUpperCase() + original.category.slice(1).replace(/-/g, ' ') : 'Uncategorized',
+      'Stock': original.stock || 0,
+      'Stock Status': (original.stock || 0) > 0 ? 'In Stock' : 'Out of Stock',
+      'Price': `$${parseFloat(original.price || 0).toFixed(2)}`,
+      'Image URL': original.thumbnail || '',
+      'Created Date': original.meta?.createdAt ? 
+        new Date(original.meta.createdAt).toLocaleDateString() : new Date().toLocaleDateString()
+    }),
+  };
 
-  // Selection management
-  const allSelectedAcrossAllPages = useCallback((allProductIds: Set<number>) => {
-    if (allProductIds.size === 0 || selectedProducts.size === 0) return false;
-    return Array.from(allProductIds).every(id => selectedProducts.has(id));
-  }, [selectedProducts]);
+  const exportHook = useExcelExport(exportConfig);
 
-  const allSelectedOnCurrentPage = useCallback((products: any[]) => {
-    if (products.length === 0) return false;
-    return products.every(product => selectedProducts.has(product.id));
-  }, [selectedProducts]);
+  // Selection helpers
+  const allSelectedAcrossAllPages = useCallback(
+    (allProductIds: Set<number>) => 
+      allProductIds.size > 0 && 
+      selectedProducts.size > 0 &&
+      Array.from(allProductIds).every(id => selectedProducts.has(id)),
+    [selectedProducts]
+  );
 
+  const allSelectedOnCurrentPage = useCallback(
+    (products: any[]) => 
+      products.length > 0 && 
+      products.every(product => selectedProducts.has(product.id)),
+    [selectedProducts]
+  );
+
+  // Selection handlers
   const handleSelectProduct = useCallback((id: number, checked: boolean) => {
     setSelectedProducts(prev => {
       const newSet = new Set(prev);
-      if (checked) {
-        newSet.add(id);
-      } else {
-        newSet.delete(id);
-      }
+      checked ? newSet.add(id) : newSet.delete(id);
       return newSet;
     });
   }, []);
 
   const handleSelectAll = useCallback((checked: boolean, allProductIds: Set<number>) => {
-    if (checked) {
-      setSelectedProducts(new Set(allProductIds));
-    } else {
-      setSelectedProducts(new Set());
-    }
+    setSelectedProducts(checked ? new Set(allProductIds) : new Set());
   }, []);
 
   const handleSelectAllCurrentPage = useCallback((products: any[]) => {
     const currentPageIds = new Set(products.map(p => p.id));
     const newSelected = new Set(selectedProducts);
-    
     const allSelected = products.every(p => selectedProducts.has(p.id));
     
-    if (allSelected) {
-      currentPageIds.forEach(id => newSelected.delete(id));
-    } else {
-      currentPageIds.forEach(id => newSelected.add(id));
-    }
+    allSelected 
+      ? currentPageIds.forEach(id => newSelected.delete(id))
+      : currentPageIds.forEach(id => newSelected.add(id));
     
     setSelectedProducts(newSelected);
   }, [selectedProducts]);
@@ -125,7 +113,7 @@ export function useProductManagement() {
     setSelectedProducts(new Set());
   }, []);
 
-  // Export functions
+  // Export handlers
   const handleExport = useCallback(async () => {
     if (exportHook.isExporting) return;
     
@@ -133,7 +121,7 @@ export function useProductManagement() {
     setIsExportModalOpen(true);
     
     try {
-      await exportHook.exportAll([...EXPORT_COLUMNS]);
+      await exportHook.exportAll(EXPORT_COLUMNS);
       
       showToast({
         title: "Export Successful",
@@ -141,21 +129,20 @@ export function useProductManagement() {
         type: "success",
         duration: 3000,
       });
-      
     } catch (error) {
       if (error instanceof DOMException && error.name === 'AbortError') {
         console.log('Export cancelled by user');
-        // Don't show error for cancellation
-      } else {
-        const errorMsg = error instanceof Error ? error.message : 'Export failed';
-        setExportError(errorMsg);
-        showToast({
-          title: "Export Failed",
-          message: errorMsg,
-          type: "error",
-          duration: 5000,
-        });
+        return;
       }
+      
+      const errorMsg = error instanceof Error ? error.message : 'Export failed';
+      setExportError(errorMsg);
+      showToast({
+        title: "Export Failed",
+        message: errorMsg,
+        type: "error",
+        duration: 5000,
+      });
     }
   }, [exportHook, showToast]);
 
@@ -174,7 +161,6 @@ export function useProductManagement() {
 
   const handleExportModalClose = useCallback(() => {
     if (exportHook.isExporting) {
-      // Show confirmation toast
       showToast({
         title: "Export in Progress",
         message: "Export is still running. Click to cancel or wait.",
@@ -184,9 +170,6 @@ export function useProductManagement() {
           label: "Cancel Export",
           onClick: handleCancelExport,
         },
-        onClose: () => {
-          // When toast is dismissed, keep modal open
-        }
       });
       return;
     }
@@ -195,7 +178,7 @@ export function useProductManagement() {
     setExportError(null);
   }, [exportHook.isExporting, showToast, handleCancelExport]);
 
-  // Page change handler
+  // Navigation handlers
   const handlePageChange = useCallback(async (page: number, totalPages: number) => {
     if (page < 1 || page > totalPages || page === currentPage) return;
     
@@ -210,7 +193,7 @@ export function useProductManagement() {
     handleClearSelection();
   }, [handleClearSelection]);
 
-  // Bulk delete with toast confirmation
+  // Bulk actions
   const handleBulkDelete = useCallback((selectedProducts: Set<number>) => {
     if (selectedProducts.size === 0) return;
     
@@ -222,10 +205,8 @@ export function useProductManagement() {
       action: {
         label: "Delete",
         onClick: () => {
-          // Here you would call your bulk delete API
           console.log('Bulk deleting:', Array.from(selectedProducts));
           handleClearSelection();
-          
           showToast({
             title: "Products Deleted",
             message: `Deleted ${selectedProducts.size} products successfully.`,
@@ -237,7 +218,10 @@ export function useProductManagement() {
     });
   }, [handleClearSelection, showToast]);
 
-  // Add a function to reset navigation state
+  const handleAddNew = useCallback(() => {
+    window.location.href = '/products/add';
+  }, []);
+
   const resetNavigation = useCallback(() => {
     setIsNavigating(false);
   }, []);
@@ -250,14 +234,6 @@ export function useProductManagement() {
     selectedProducts,
     isExportModalOpen,
     exportError,
-    
-    // Setters
-    setActiveStatus,
-    setCurrentPage,
-    setIsNavigating,
-    setSelectedProducts,
-    setIsExportModalOpen,
-    setExportError,
     
     // Export
     exportHook,
@@ -278,8 +254,16 @@ export function useProductManagement() {
     handleStatusChange,
     resetNavigation,
     
-    // UI Actions
-    handleAddNew: () => window.location.href = '/products/add',
+    // Actions
+    handleAddNew,
     handleBulkDelete,
+    
+    // For component use if needed
+    setActiveStatus,
+    setCurrentPage,
+    setIsNavigating,
+    setSelectedProducts,
+    setIsExportModalOpen,
+    setExportError,
   };
 }

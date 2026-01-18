@@ -1,6 +1,4 @@
-// components/ui/dynamic-table.tsx
 'use client';
-
 import { useState } from 'react';
 import { Checkbox } from '@/components/customer-ui/checkbox';
 import { Button } from '@/components/ui/button';
@@ -77,26 +75,30 @@ export default function DynamicTable<T extends Record<string, any>>({
   };
 
   return (
-    <div>
+    <div className="rounded-md border overflow-hidden">
       <Table>
         <TableHeader>
           <TableRow>
             {showSelection && (
-              <TableHead className="w-12">
-                <Checkbox
-                  checked={allSelected}
-                  onCheckedChange={() => onSelectAll?.(!allSelected)}
-                  disabled={data.length === 0}
-                />
+              <TableHead className="w-12 px-4">
+                <div className="flex items-center justify-center">
+                  <Checkbox
+                    checked={allSelected}
+                    onCheckedChange={() => onSelectAll?.(!allSelected)}
+                    disabled={data.length === 0}
+                  />
+                </div>
               </TableHead>
             )}
             
             {columns.map(({ key, label, align, width }) => (
               <TableHead
                 key={key}
-                className={`text-xs font-medium text-gray-600 uppercase tracking-wider ${
-                  align === 'center' ? 'text-center' : align === 'right' ? 'text-right' : 'text-left'
-                }`}
+                className={`
+                  text-xs font-medium text-gray-600 uppercase tracking-wider bg-gray-50
+                  ${align === 'center' ? 'text-center' : align === 'right' ? 'text-right' : 'text-left'}
+                  px-4 py-3
+                `}
                 style={{ width }}
               >
                 {label}
@@ -104,7 +106,9 @@ export default function DynamicTable<T extends Record<string, any>>({
             ))}
             
             {hasActions && (
-              <TableHead className="text-xs font-medium text-gray-600 uppercase tracking-wider">Actions</TableHead>
+              <TableHead className="text-xs font-medium text-gray-600 uppercase tracking-wider bg-gray-50 px-4 py-3 text-center">
+                Actions
+              </TableHead>
             )}
           </TableRow>
         </TableHeader>
@@ -112,9 +116,14 @@ export default function DynamicTable<T extends Record<string, any>>({
         <TableBody>
           {data.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={colSpan} className="h-24 text-center">
-                <div className="flex flex-col items-center justify-center text-gray-500">
-                  <p className="text-sm">{emptyMessage}</p>
+              <TableCell colSpan={colSpan} className="h-64 text-center">
+                <div className="flex flex-col items-center justify-center text-gray-500 py-8">
+                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-3">
+                    <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                    </svg>
+                  </div>
+                  <p className="text-sm font-medium">{emptyMessage}</p>
                   <p className="text-xs text-gray-400 mt-1">No records to display</p>
                 </div>
               </TableCell>
@@ -127,18 +136,23 @@ export default function DynamicTable<T extends Record<string, any>>({
               return (
                 <TableRow
                   key={rowId}
-                  className={isSelected ? 'bg-blue-50 hover:bg-blue-100' : 'hover:bg-gray-50'}
+                  className={`
+                    border-b border-gray-100
+                    ${isSelected ? 'bg-blue-50 hover:bg-blue-50' : 'hover:bg-gray-50'}
+                  `}
                 >
                   {showSelection && (
-                    <TableCell>
-                      <Checkbox
-                        checked={isSelected}
-                        onCheckedChange={(checked) => onSelectRow?.(rowId, checked as boolean)}
-                      />
+                    <TableCell className="px-4 py-3">
+                      <div className="flex items-center justify-center">
+                        <Checkbox
+                          checked={isSelected}
+                          onCheckedChange={(checked) => onSelectRow?.(rowId, checked as boolean)}
+                        />
+                      </div>
                     </TableCell>
                   )}
                   
-                  {columns.map(({ key, format, align }) => {
+                  {columns.map(({ key, format, align, width }) => {
                     const value = getNestedValue(row, key);
                     let displayValue: React.ReactNode;
                     
@@ -146,16 +160,34 @@ export default function DynamicTable<T extends Record<string, any>>({
                       displayValue = format(value, row);
                     } else if (key.includes('image') || key.includes('thumbnail')) {
                       displayValue = value ? (
-                        <Image src={value} alt="Image" width={48} height={48} className="w-12 h-12 rounded-md object-cover" />
+                        <div className="flex justify-center">
+                          <Image 
+                            src={value} 
+                            alt="Image" 
+                            width={48} 
+                            height={48} 
+                            className="w-12 h-12 rounded-md object-cover" 
+                          />
+                        </div>
                       ) : (
-                        <div className="w-12 h-12 bg-gray-200 rounded-md flex items-center justify-center">
-                          <span className="text-xs text-gray-500">No Image</span>
+                        <div className="flex justify-center">
+                          <div className="w-12 h-12 bg-gray-100 rounded-md flex items-center justify-center">
+                            <span className="text-xs text-gray-400">No Image</span>
+                          </div>
                         </div>
                       );
                     } else if (key.includes('price') || key.includes('amount')) {
-                      displayValue = <span className="font-semibold">${typeof value === 'number' ? value.toFixed(2) : value}</span>;
+                      displayValue = (
+                        <span className="font-medium text-gray-900">
+                          ${typeof value === 'number' ? value.toFixed(2) : value}
+                        </span>
+                      );
                     } else if (key.includes('date') || key.includes('At')) {
-                      displayValue = <span className="text-gray-600 text-sm">{value ? new Date(value).toLocaleDateString() : '-'}</span>;
+                      displayValue = (
+                        <span className="text-gray-600 text-sm">
+                          {value ? new Date(value).toLocaleDateString() : '-'}
+                        </span>
+                      );
                     } else if (key.includes('status')) {
                       const colors: Record<string, string> = {
                         active: 'bg-green-100 text-green-800',
@@ -184,7 +216,12 @@ export default function DynamicTable<T extends Record<string, any>>({
                     return (
                       <TableCell
                         key={`${rowId}-${key}`}
-                        className={align === 'center' ? 'text-center' : align === 'right' ? 'text-right' : 'text-left'}
+                        className={`
+                          px-4 py-3
+                          ${align === 'center' ? 'text-center' : align === 'right' ? 'text-right' : 'text-left'}
+                          ${key.includes('price') ? 'font-medium' : 'text-gray-700'}
+                        `}
+                        style={width ? { width } : undefined}
                       >
                         {displayValue}
                       </TableCell>
@@ -192,8 +229,8 @@ export default function DynamicTable<T extends Record<string, any>>({
                   })}
                   
                   {hasActions && (
-                    <TableCell>
-                      <div className="flex items-center gap-2">
+                    <TableCell className="px-4 py-3">
+                      <div className="flex items-center justify-center gap-2">
                         {onEdit && (
                           <Button
                             variant="ghost"
