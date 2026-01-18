@@ -10,7 +10,7 @@ import {
 } from "@/lib/api/products";
 import { Input } from "@/components/ui/input";
 import { X, Plus } from "lucide-react";
-import PageHeader from "@/components/header/header";
+import PageHeader from "@/components/header/globle-header";
 import {
   Select,
   SelectContent,

@@ -5,7 +5,7 @@ import { Product } from '@/app/products/_types/product';
 import { useDeleteProduct } from '@/lib/api/products';
 import { formatDate, formatPrice } from '@/lib/utils';
 import DynamicTable, { ColumnConfig } from '@/components/table/dynamic-table';
-import { useToast } from '@/components/customer-ui/toast';
+import { useToast } from '@/components/custom-ui/toast';
 
 const PRODUCT_COLUMNS: ColumnConfig[] = [
   { key: 'thumbnail', label: 'Image', width: '80px', align: 'center' },

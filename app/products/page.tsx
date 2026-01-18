@@ -12,8 +12,8 @@ import Skeleton from "@/components/ui/skeleton";
 import { useProductManagement } from "./_hooks/useProductManagement";
 import { ITEMS_PER_PAGE } from "./constants";
 import Pagination from "@/lib/providers/pagination";
-import PageHeader from "@/components/header/header";
-import ExportProgressModal from "@/components/customer-ui/export-progress-modal";
+import PageHeader from "@/components/header/globle-header";
+import ExportProgressModal from "@/components/custom-ui/export-progress-modal";
 import { useAllProductIds } from "@/lib/api/products/queries";
 
 export default function ProductsPage() {

@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { Checkbox } from '@/components/customer-ui/checkbox';
+import { Checkbox } from '@/components/custom-ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { Pencil, Trash2 } from 'lucide-react';
 import Image from 'next/image';

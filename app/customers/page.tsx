@@ -1,5 +1,5 @@
 "use client";
-import PageHeader from "@/components/header/header";
+import PageHeader from "@/components/header/globle-header";
 import { Download, Plus } from "lucide-react";
 
 export default function Customerpage() {

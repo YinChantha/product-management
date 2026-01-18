@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { ProductStatus } from '@/app/products/_types/product';
-import { useToast } from '@/components/customer-ui/toast';
+import { useToast } from '@/components/custom-ui/toast';
 import { useExcelExport } from './useExcelExport';
 import { EXPORT_COLUMNS } from '../constants';
 
