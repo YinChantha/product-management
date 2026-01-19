@@ -14,6 +14,9 @@ nvm use 22.17.0
 # If not installed, install it first:
 nvm install 22.17.0
 
+# Environment set up 
+cp .env.example .env
+
 First, run the development server:
 
 ```bash
